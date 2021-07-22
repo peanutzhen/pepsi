@@ -5,16 +5,25 @@
 package pepsi
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"testing"
 )
 
+const (
+	LOCALHOST = "http://localhost:9999"
+	PORT      = ":9999"
+)
+
+var (
+	engine = New()
+)
+
 func TestEngine_Get(t *testing.T) {
-	engine := New()
-	engine.Get("/hello_world", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprintf(w, "Hello world!")
+	s := "Hello world!"
+
+	engine.Get("/hello_world", func(context *Context) {
+		context.String(http.StatusOK, s)
 	})
 	go engine.Run(":9999")
 
@@ -23,13 +32,12 @@ func TestEngine_Get(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	t.Log(*rsp)
 	defer rsp.Body.Close()
 	body, err := ioutil.ReadAll(rsp.Body)
 	if rsp.StatusCode != 200 {
 		t.Error(rsp.StatusCode)
 	}
-	if string(body) != "Hello world!" {
+	if string(body) != s {
 		t.Error(string(body))
 	}
 
@@ -38,9 +46,12 @@ func TestEngine_Get(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	t.Log(*rsp)
 	defer rsp.Body.Close()
 	if rsp.StatusCode != 404 {
 		t.Error(rsp.StatusCode)
+	}
+	body, err = ioutil.ReadAll(rsp.Body)
+	if string(body) != "404 NOT FOUND: /not_found\n" {
+		t.Error(string(body))
 	}
 }
