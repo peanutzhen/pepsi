@@ -15,11 +15,14 @@ import (
 
 // Context 定义一次http交互的信息
 type Context struct {
-	Writer     http.ResponseWriter
-	Req        *http.Request
-	Path       string // 路由
-	Method     string // 请求方法(GET/POST/PUT)
-	StatusCode int    // 响应http状态码
+	Writer http.ResponseWriter
+	Req    *http.Request
+	// 定义request所含信息
+	Path   string // 路由
+	Method string // 请求方法(GET/POST/PUT)
+	Params Params // 动态路由参数
+	// 定义response所含信息
+	StatusCode int // 响应http状态码
 }
 
 // PostForm 返回 Context 中 post 数据对应 key 的 value。
