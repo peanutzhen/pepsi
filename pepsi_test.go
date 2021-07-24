@@ -5,53 +5,44 @@
 package pepsi
 
 import (
+	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-const (
-	LOCALHOST = "http://localhost:9999"
-	PORT      = ":9999"
-)
-
-var engine = New()
-
-
-func TestEngine_Get(t *testing.T) {
-	s := "Hello world!"
-	log.Println(engine)
-	engine.Get("/hello_world", func(context *Context) {
-		context.String(http.StatusOK, s)
+func Test_200OK(t *testing.T) {
+	engine := CreateEngine()
+	engine.GET("/hello", func(context *Context) {
+		context.HTML(http.StatusOK, "<h1>Hello world</h1>")
 	})
-	go engine.Run(":9999")
+	ts := httptest.NewServer(engine)
+	defer ts.Close()
 
-	rsp, err := http.Get("http://localhost:9999/hello_world")
+	res, err := http.Get(fmt.Sprintf("%s/hello", ts.URL))
 	if err != nil {
-		t.Error(err)
-		return
+		fmt.Println(err)
 	}
-	defer rsp.Body.Close()
-	body, err := ioutil.ReadAll(rsp.Body)
-	if rsp.StatusCode != 200 {
-		t.Error(rsp.StatusCode)
-	}
-	if string(body) != s {
-		t.Error(string(body))
-	}
+	resp, _ := ioutil.ReadAll(res.Body)
 
-	rsp, err = http.Get("http://localhost:9999/not_found")
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, "<h1>Hello world</h1>", string(resp))
+}
+
+func Test_404NotFound(t *testing.T) {
+	engine := CreateEngine()
+	ts := httptest.NewServer(engine)
+	defer ts.Close()
+
+	res, err := http.Get(fmt.Sprintf("%s/not_found", ts.URL))
 	if err != nil {
-		t.Error(err)
-		return
+		fmt.Println(err)
 	}
-	defer rsp.Body.Close()
-	if rsp.StatusCode != 404 {
-		t.Error(rsp.StatusCode)
-	}
-	body, err = ioutil.ReadAll(rsp.Body)
-	if string(body) != "404 NOT FOUND: /not_found\n" {
-		t.Error(string(body))
-	}
+	resp, _ := ioutil.ReadAll(res.Body)
+
+	assert.Equal(t, http.StatusNotFound, res.StatusCode)
+	assert.Contains(t, string(resp), "404 NOT FOUND")
 }

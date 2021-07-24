@@ -33,17 +33,17 @@ type Engine struct {
 // 实际上 这是RouterGroup负责的
 func (group *RouterGroup) addRouter(method string, pattern string, handler Handler) {
 	pattern = group.prefix + pattern
-	log.Printf("Route %4s - %s", method, pattern)
+	log.Printf("addRouter %4s - %s", method, pattern)
 	group.engine.router.addRoute(method, pattern, handler)
 }
 
-// Get 添加Get方法路由
-func (group *RouterGroup) Get(pattern string, handler Handler) {
+// GET 添加Get方法路由
+func (group *RouterGroup) GET(pattern string, handler Handler) {
 	group.addRouter("GET", pattern, handler)
 }
 
-// Post 添加Post方法路由
-func (group *RouterGroup) Post(pattern string, handler Handler) {
+// POST 添加Post方法路由
+func (group *RouterGroup) POST(pattern string, handler Handler) {
 	group.addRouter("POST", pattern, handler)
 }
 
@@ -64,10 +64,12 @@ func (engine *Engine) Run(addr string) (err error) {
 	return http.ListenAndServe(addr, engine)
 }
 
-// New 获取Engine实例
-func New() *Engine {
+// CreateEngine 获取Engine实例
+// 默认开启日志记录/错误恢复功能
+func CreateEngine() *Engine {
 	engine := &Engine{router: newRouter()}
 	engine.RouterGroup = &RouterGroup{engine: engine}
 	engine.groups = []*RouterGroup{engine.RouterGroup}
+	engine.AddMiddlewares(Logger(), Recovery())
 	return engine
 }

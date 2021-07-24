@@ -5,73 +5,45 @@
 package pepsi
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"log"
+	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestContext_Data(t *testing.T) {
-	data := []byte("I am peanutzhen!.")
-	log.Println(engine)
-	engine.Get("/data", func(context *Context) {
-		context.Data(http.StatusOK, data)
+func TestContext(t *testing.T) {
+	engine := CreateEngine()
+	engine.GET("/data", func(context *Context) {
+		context.Data(http.StatusOK, []byte("Hello data"))
 	})
-	go engine.Run(PORT)
-
-	rsp, err := http.Get(LOCALHOST + "/data")
-	defer rsp.Body.Close()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	body, err := ioutil.ReadAll(rsp.Body)
-	if string(body) != string(data) {
-		t.Error(string(body))
-	}
-}
-
-func TestContext_HTML(t *testing.T) {
-	html := "<h1>TestContext_HTML</h1>"
-	log.Println(engine)
-	engine.Get("/html", func(context *Context) {
-		context.HTML(http.StatusOK, html)
+	engine.GET("/html", func(context *Context) {
+		context.HTML(http.StatusOK, "<h1>Hello world</h1>")
 	})
-	go engine.Run(PORT)
-
-	rsp, err := http.Get(LOCALHOST + "/html")
-	defer rsp.Body.Close()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	body, err := ioutil.ReadAll(rsp.Body)
-	if string(body) != html {
-		t.Errorf("Actual: %s\nExpected: %s\n", string(body), html)
-	}
-}
-
-func TestContext_JSON(t *testing.T) {
-	obj := map[string]interface{}{
-		"username": "peanutzhen",
-		"age":      20,
-	}
-	log.Println(engine)
-	engine.Get("/json", func(context *Context) {
-		context.JSON(http.StatusOK, obj)
+	engine.GET("/json", func(context *Context) {
+		context.JSON(http.StatusOK, map[string]string{"hello": "world"})
 	})
-	go engine.Run(PORT)
+	engine.GET("/fail", func(context *Context) {
+		context.Fail(http.StatusInternalServerError, "Internal Serber Error")
+	})
+	ts := httptest.NewServer(engine)
+	defer ts.Close()
 
-	rsp, err := http.Get(LOCALHOST + "/json")
-	defer rsp.Body.Close()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	body, err := ioutil.ReadAll(rsp.Body)
-	jsonObj, err := json.Marshal(obj)
-	if string(body) != string(jsonObj)+"\n" {
-		t.Errorf("Actual: %s\nExpected: %s\n", string(body), string(jsonObj))
-	}
+	res1, _ := http.Get(fmt.Sprintf("%s/data", ts.URL))
+	res2, _ := http.Get(fmt.Sprintf("%s/html", ts.URL))
+	res3, _ := http.Get(fmt.Sprintf("%s/json", ts.URL))
+	res4, _ := http.Get(fmt.Sprintf("%s/fail", ts.URL))
+
+	//resp1, _ := ioutil.ReadAll(res1.Body)
+	//resp2, _ := ioutil.ReadAll(res2.Body)
+	//resp3, _ := ioutil.ReadAll(res3.Body)
+	//resp4, _ := ioutil.ReadAll(res4.Body)
+
+	assert.Equal(t, http.StatusOK, res1.StatusCode)
+	assert.Equal(t, http.StatusOK, res2.StatusCode)
+	assert.Equal(t, http.StatusOK, res3.StatusCode)
+	assert.Equal(t, http.StatusInternalServerError, res4.StatusCode)
+
+	//assert.Equal(t, "<h1>Hello world</h1>", string(resp))
 }

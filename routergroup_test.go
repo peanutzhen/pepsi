@@ -6,20 +6,14 @@ package pepsi
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
-
-func Logger() Handler {
-	return func(c *Context) {
-		t := time.Now()
-		c.NextHandler()
-		log.Printf("[%d] %s in %v", c.StatusCode, c.Req.RequestURI, time.Since(t))
-	}
-}
 
 func onlyForV2() Handler {
 	return func(c *Context) {
@@ -30,30 +24,26 @@ func onlyForV2() Handler {
 }
 
 func TestRouterGroup(t *testing.T) {
-	log.Printf("RouteGroup Engine: %+v\n", engine)
-	engine.AddMiddlewares(Logger())
-	engine.Get("/greeting", func(c *Context) {
-		c.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
+	engine := CreateEngine()
+	engine.GET("/greeting", func(c *Context) {
+		c.HTML(http.StatusOK, "<h1>OK</h1>")
 	})
-
 	v2 := engine.ForkGroup("/v2")
 	v2.AddMiddlewares(onlyForV2())
-	{
-		log.Printf("v2: %+v\n", v2)
-		v2.Get("/hello/:name", func(c *Context) {
-			c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
-		})
-	}
+	v2.GET("/hello/:name", func(c *Context) {
+		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
+	})
+	ts := httptest.NewServer(engine)
+	defer ts.Close()
 
-	go engine.Run(PORT)
+	res1, _ := http.Get(fmt.Sprintf("%s/greeting", ts.URL))
+	rsp1, _ := ioutil.ReadAll(res1.Body)
+	log.Println(string(rsp1))
 
-	rsp, _ := http.Get(LOCALHOST + "/greeting")
-	defer rsp.Body.Close()
-	body, _ := ioutil.ReadAll(rsp.Body)
-	fmt.Println(string(body))
+	res2, _ := http.Get(fmt.Sprintf("%s/v2/hello/peanutzhen", ts.URL))
+	rsp2, _ := ioutil.ReadAll(res2.Body)
+	log.Println(string(rsp2))
 
-	rsp, _ = http.Get(LOCALHOST + "/v2/hello/peanutzhen")
-	defer rsp.Body.Close()
-	body, _ = ioutil.ReadAll(rsp.Body)
-	fmt.Println(string(body))
+	assert.Equal(t, "<h1>OK</h1>", string(rsp1))
+	assert.Equal(t, http.StatusInternalServerError, res2.StatusCode)
 }

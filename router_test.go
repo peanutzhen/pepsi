@@ -61,6 +61,8 @@ func TestDuplicated_Route(t *testing.T) {
 			}
 		}
 	}()
-	engine.Get("/same_routing", nil)
-	engine.Get("/same_routing", nil)
+
+	engine := CreateEngine()
+	engine.GET("/same_routing", nil)
+	engine.GET("/same_routing", nil)
 }
