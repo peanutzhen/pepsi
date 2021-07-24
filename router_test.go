@@ -52,3 +52,15 @@ func TestGetRoute(t *testing.T) {
 		t.Fatal("Should get param 'filename' value js/i_hate_js.js!")
 	}
 }
+
+func TestDuplicated_Route(t *testing.T) {
+	defer func() {
+		if err:=recover();err!=nil{
+			if err != "pattern: /same_routing has the same name with previous router!" {
+				t.Fatal("TestDuplicated_Route failed, should return err msg.")
+			}
+		}
+	}()
+	engine.Get("/same_routing", nil)
+	engine.Get("/same_routing", nil)
+}

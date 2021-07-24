@@ -7,13 +7,14 @@ package pepsi
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"testing"
 )
 
 func TestContext_Data(t *testing.T) {
 	data := []byte("I am peanutzhen!.")
-
+	log.Println(engine)
 	engine.Get("/data", func(context *Context) {
 		context.Data(http.StatusOK, data)
 	})
@@ -33,7 +34,7 @@ func TestContext_Data(t *testing.T) {
 
 func TestContext_HTML(t *testing.T) {
 	html := "<h1>TestContext_HTML</h1>"
-
+	log.Println(engine)
 	engine.Get("/html", func(context *Context) {
 		context.HTML(http.StatusOK, html)
 	})
@@ -56,7 +57,7 @@ func TestContext_JSON(t *testing.T) {
 		"username": "peanutzhen",
 		"age":      20,
 	}
-
+	log.Println(engine)
 	engine.Get("/json", func(context *Context) {
 		context.JSON(http.StatusOK, obj)
 	})

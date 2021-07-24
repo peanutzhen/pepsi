@@ -79,6 +79,9 @@ func (node *trieNode) insert(pattern string, handler Handler) {
 	var recursion func(level int)
 	recursion = func(level int) {
 		if level == depth {
+			if curNode.fullPath != "" {
+				panic(fmt.Sprintf("pattern: %s has the same name with previous router!", pattern))
+			}
 			curNode.fullPath = pattern
 			curNode.handler = handler
 			return

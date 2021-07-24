@@ -6,6 +6,7 @@ package pepsi
 
 import (
 	"io/ioutil"
+	"log"
 	"net/http"
 	"testing"
 )
@@ -15,13 +16,12 @@ const (
 	PORT      = ":9999"
 )
 
-var (
-	engine = New()
-)
+var engine = New()
+
 
 func TestEngine_Get(t *testing.T) {
 	s := "Hello world!"
-
+	log.Println(engine)
 	engine.Get("/hello_world", func(context *Context) {
 		context.String(http.StatusOK, s)
 	})

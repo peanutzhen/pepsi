@@ -21,8 +21,21 @@ type Context struct {
 	Path   string // 路由
 	Method string // 请求方法(GET/POST/PUT)
 	Params Params // 动态路由参数
+
+	handlers HandlerChain
+	i        int // 表示执行到Handlers[i]
+
 	// 定义response所含信息
 	StatusCode int // 响应http状态码
+}
+
+// NextHandler 告诉 Context 进入下一个处理逻辑
+func (context *Context) NextHandler() {
+	context.i++
+	for context.i < len(context.handlers) {
+		context.handlers[context.i](context)
+		context.i++
+	}
 }
 
 // PostForm 返回 Context 中 post 数据对应 key 的 value。
@@ -78,6 +91,11 @@ func (context *Context) HTML(code int, html string) {
 	context.Writer.Write([]byte(html))
 }
 
+func (context *Context) Fail(code int, err string) {
+	context.i = len(context.handlers)
+	context.JSON(code, map[string]interface{}{"message": err})
+}
+
 // 构造 Context 实例
 func newContext(w http.ResponseWriter, req *http.Request) *Context {
 	return &Context{
@@ -85,5 +103,6 @@ func newContext(w http.ResponseWriter, req *http.Request) *Context {
 		Req:    req,
 		Path:   req.URL.Path,
 		Method: req.Method,
+		i: -1,
 	}
 }

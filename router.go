@@ -7,7 +7,6 @@ package pepsi
 // router模块负责路由功能
 
 import (
-	"log"
 	"net/http"
 	"strings"
 )
@@ -21,7 +20,6 @@ type router struct {
 
 // router 添加路由
 func (r *router) addRoute(method string, pattern string, handler Handler) {
-	log.Printf("Route %4s - %s", method, pattern)
 	if _, ok := r.handlers[method]; !ok {
 		r.handlers[method] = &trieNode{}
 	}
@@ -56,10 +54,14 @@ func (r *router) handle(context *Context) {
 	handler, params := r.getRoute(context.Method, context.Path)
 	if handler != nil {
 		context.Params = params // 填充动态路由参数
-		handler(context)
+		// 填充实际业务Handler
+		context.handlers = append(context.handlers, handler)
 	} else {
-		context.String(http.StatusNotFound, "404 NOT FOUND: %s\n", context.Path)
+		context.handlers = append(context.handlers, func(context *Context) {
+			context.String(http.StatusNotFound, "404 NOT FOUND: %s\n", context.Path)
+		})
 	}
+	context.NextHandler()
 }
 
 // 构造 router 实例
