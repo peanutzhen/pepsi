@@ -1,5 +1,5 @@
 # Pepsi Web Framework
-Pepsi是跟随[7days-golang](https://github.com/geektutu/7days-golang)开发的简单Web框架，并在此基础上增添了自己的想法，也算是学习了Gin框架的原理。Pepsi取名灵感源自于女朋友网名叫pepsi。
+Pepsi是跟随[7days-golang](https://github.com/geektutu/7days-golang)开发的简单Web框架，并在此基础上增添了自己的想法，也算是学习了Gin框架的原理。
 
 ## Feature
 
